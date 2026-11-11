@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen pb-16 selection:bg-indigo-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-gray-900/90 backdrop-blur border-b border-gray-800">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xl shadow-lg shadow-indigo-500/30">
+          S
+        </div>
+        <div>
+          <h1 id="shop-title" class="font-bold text-lg leading-tight">Mi Tienda</h1>
+          <p class="text-xs text-gray-400">Catálogo Oficial</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <button id="admin-toggle-btn" onclick="toggleAdminPanel()" class="p-2.5 text-gray-400 hover:text-white bg-gray-800/80 hover:bg-gray-800 rounded-xl border border-gray-700 transition" title="Panel de Administración">
+          <i class="fa-solid fa-lock text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto px-4 pt-6">
+
+    <!-- Admin Status Banner -->
+    <div id="admin-banner" class="hidden mb-6 p-4 bg-indigo-950/80 border border-indigo-500/50 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-sm font-semibold text-indigo-200">Modo Administrador Activo</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button onclick="openAddModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-plus"></i>
+          <span>Nuevo Producto</span>
+        </button>
+        <button onclick="openSettingsModal()" class="p-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs transition" title="Ajustes">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+        <button onclick="logoutAdmin()" class="px-3 py-1.5 bg-red-600/30 hover:bg-red-600/50 text-red-300 rounded-lg text-xs font-semibold transition">
+          Salir
+        </button>
+      </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-6">
+      <div class="relative flex-1">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+        <input type="text" id="search-input" oninput="renderProducts()" placeholder="Buscar producto o sabor..." class="w-full bg-gray-900 border border-gray-800 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+      </div>
+      <div id="category-filters" class="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+        <!-- Dyn Categories -->
+      </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Dynamic products -->
+    </div>
+  </main>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-2xl p-6 relative shadow-2xl">
+      <button onclick="closeLoginModal()" class="absolute right-4 top-4 text-gray-500 hover:text-gray-300">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-3">
+          <i class="fa-solid fa-shield-halved text-xl"></i>
+        </div>
+        <h3 class="text-lg font-bold">Panel de Control</h3>
+        <p class="text-xs text-gray-400">Ingresá tu contraseña de administrador</p>
+      </div>
+      <form onsubmit="handleLogin(event)">
+        <input type="password" id="login-password" placeholder="Contraseña" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm mb-4 focus:outline-none focus:border-indigo-500 transition">
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl text-sm transition">
+          Ingresar
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Product Modal (Add / Edit) -->
+  <div id="product-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-gray-900 border border-gray-800 w-full max-w-md rounded-2xl p-6 relative shadow-2xl my-8">
+      <button onclick="closeProductModal()" class="absolute right-4 top-4 text-gray-500 hover:text-gray-300">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 id="modal-title" class="text-lg font-bold mb-4">Agregar Producto</h3>
+      <form onsubmit="saveProduct(event)" class="space-y-4">
+        <input type="hidden" id="prod-id">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Nombre del Producto</label>
+          <input type="text" id="prod-title" required placeholder="Ej: Ebcrate BC Pro 40k Puff" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Sabor / Variante</label>
+          <input type="text" id="prod-flavor" placeholder="Ej: Blue Razz Ice" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Precio ($)</label>
+            <input type="number" id="prod-price" min="0" step="any" placeholder="0.00" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Stock Inicial</label>
+            <input type="number" id="prod-stock" min="0" value="1" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Categoría</label>
+          <input type="text" id="prod-category" placeholder="Ej: Vapes, Pods, Esencias" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">URL de Imagen (Opcional)</label>
+          <input type="url" id="prod-image" placeholder="https://..." class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Descripción</label>
+          <textarea id="prod-desc" rows="2" placeholder="Detalles extra del producto..." class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl text-sm transition mt-2">
+          Guardar Producto
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-2xl p-6 relative shadow-2xl">
+      <button onclick="closeSettingsModal()" class="absolute right-4 top-4 text-gray-500 hover:text-gray-300">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 class="text-lg font-bold mb-4">Ajustes del Catálogo</h3>
+      <form onsubmit="saveSettings(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Nombre de la Tienda</label>
+          <input type="text" id="set-shop-name" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Número de WhatsApp (con código de país)</label>
+          <input type="text" id="set-whatsapp" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Nueva Contraseña Admin</label>
+          <input type="password" id="set-password" placeholder="Dejar en blanco para no cambiar" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">
+          Guardar Ajustes
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // State
+    const DEFAULT_DATA = {
+      shopName: "Catálogo",
+      whatsapp: "5493834345913",
+      adminPass: "ortega",
+      products: [
+        {
+          id: "1",
+          title: "Ebcrate BC Pro 40k Puff",
+          flavor: "Blue Razz Ice",
+          price: 0,
+          stock: 5,
+          category: "Vapes",
+          image: "https://images.unsplash.com/photo-1541689592655-f5f52825a3b8?w=500&auto=format&fit=crop&q=60",
+          desc: "40,000 Puffs. Sabor Blue Razz Ice fresco e intenso."
+        }
+      ]
+    };
+
+    let appData = JSON.parse(localStorage.getItem('catalog_data')) || DEFAULT_DATA;
+    let isAdmin = sessionStorage.getItem('admin_logged') === 'true';
+    let selectedCategory = 'Todos';
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      saveData();
+      renderApp();
+    });
+
+    function saveData() {
+      localStorage.setItem('catalog_data', JSON.stringify(appData));
+    }
+
+    function renderApp() {
+      document.getElementById('shop-title').innerText = appData.shopName;
+      
+      const adminBanner = document.getElementById('admin-banner');
+      if (isAdmin) {
+        adminBanner.classList.remove('hidden');
+      } else {
+        adminBanner.classList.add('hidden');
+      }
+
+      renderCategories();
+      renderProducts();
+    }
+
+    function renderCategories() {
+      const categories = ['Todos', ...new Set(appData.products.map(p => p.category).filter(Boolean))];
+      const container = document.getElementById('category-filters');
+      
+      container.innerHTML = categories.map(cat => `
+        <button 
+          onclick="setCategory('${cat}')"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+            selectedCategory === cat 
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' 
+              : 'bg-gray-900 text-gray-400 border border-gray-800 hover:text-white'
+          }">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    function setCategory(cat) {
+      selectedCategory = cat;
+      renderCategories();
+      renderProducts();
+    }
+
+    function renderProducts() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const grid = document.getElementById('products-grid');
+
+      const filtered = appData.products.filter(p => {
+        const matchesCat = selectedCategory === 'Todos' || p.category === selectedCategory;
+        const matchesSearch = p.title.toLowerCase().includes(search) || 
+                              (p.flavor && p.flavor.toLowerCase().includes(search));
+        return matchesCat && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 text-gray-500">
+            <i class="fa-solid fa-box-open text-4xl mb-3"></i>
+            <p class="text-sm">No se encontraron productos disponibles.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => {
+        const inStock = p.stock > 0;
+        const waMsg = encodeURIComponent(`Hola! Quisiera consultar/encargar el producto: ${p.title}${p.flavor ? ` (Sabor: ${p.flavor})` : ''}`);
+        const waUrl = `https://wa.me/${appData.whatsapp}?text=${waMsg}`;
+
+        return `
+          <div class="bg-gray-900 border border-gray-800/80 rounded-2xl overflow-hidden flex flex-col hover:border-gray-700 transition">
+            <div class="relative h-48 bg-gray-950 overflow-hidden">
+              ${p.image 
+                ? `<img src="${p.image}" alt="${p.title}" class="w-full h-full object-cover">` 
+                : `<div class="w-full h-full flex items-center justify-center text-gray-700"><i class="fa-solid fa-cloud-vape text-5xl"></i></div>`
+              }
+              <div class="absolute top-3 right-3 flex gap-1">
+                ${inStock 
+                  ? `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur">DISPONIBLE (${p.stock})</span>`
+                  : `<span class="bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur">SIN STOCK</span>`
+                }
+              </div>
+            </div>
+
+            <div class="p-4 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 class="font-bold text-base text-gray-100">${p.title}</h3>
+                ${p.flavor ? `<p class="text-xs font-medium text-indigo-400 mt-0.5"><i class="fa-solid fa-tag text-[10px] mr-1"></i>${p.flavor}</p>` : ''}
+                ${p.desc ? `<p class="text-xs text-gray-400 mt-2 line-clamp-2">${p.desc}</p>` : ''} </div>  <div class="mt-4 pt-3 border-t border-gray-800/60 flex items-center justify-between"> <div> <span class="text-xs text-gray-500 block">Precio</span> <span class="text-lg font-extrabold text-white">${p.price > 0 ? `$${p.price}` : 'Consultar'}</span>
+                </div>
+                
+                <a href="${inStock ? waUrl : '#'}" target="_blank" 
+                   class="px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition ${
+                     inStock 
+                       ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20' 
+                       : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                   }">
+                  <i class="fa-brands fa-whatsapp text-sm"></i>
+                  <span>Pedir</span>
+                </a>
+              </div>
+
+              <!-- Admin Controls -->
+              ${isAdmin ? `
+                <div class="mt-4 pt-3 border-t border-indigo-900/50 bg-indigo-950/30 -mx-4 -mb-4 p-3 flex items-center justify-between gap-2">
+                  <div class="flex items-center space-x-1">
+                    <button onclick="updateStock('${p.id}', -1)" class="w-7 h-7 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-bold flex items-center justify-center">-</button>
+                    <span class="text-xs font-semibold px-1 text-indigo-200">Stock: ${p.stock}</span>
+                    <button onclick="updateStock('${p.id}', 1)" class="w-7 h-7 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-bold flex items-center justify-center">+</button>
+                  </div>
+                  <div class="flex items-center space-x-1">
+                    <button onclick="openEditModal('${p
